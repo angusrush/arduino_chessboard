@@ -1,8 +1,8 @@
+#!/usr/bin/python
+
 import serial
+import chess
 
-ser = serial.Serial('/dev/ttyACM0', 9600)
-
-square_translations = ["a1", "a2", "b1", "b2"]
 
 class BoardEvent:
     def __init__(self, square, piece_lifted):
@@ -11,17 +11,47 @@ class BoardEvent:
         self.square = square
         self.is_lift = piece_lifted
 
-modes = ["Waiting", "Move in progress", "Take/Castle in progress", "Castle in progress"]
-mode = 0
 
-while True:
-    reading = ser.readline().decode('utf-8')
-    x = reading.split()
+ser = serial.Serial('/dev/ttyACM0', 9600)
 
-    board_event = BoardEvent(x[0], x[1])
+square_translations = [0, 1, 8, 9]
 
-    print(board_event.square)
-    print(board_event.is_lift)
+starting_fen = "5rk1/5ppp/8/8/8/8/1q3PPP/Q4RK1 w - - 0 1"
 
+board = chess.Board(fen = starting_fen)
 
+print(board)
+
+move_in_progress = False
+
+while board.is_checkmate() == False:
+    if board.turn:
+        to_move = "White"
+    else:
+        to_move = "Black"
+
+    print(to_move + " to move.")
+
+    reading_startsquare = ser.readline().decode('utf-8')
+    print("Starting move up:" + reading_startsquare)
+    reading_endsquare = ser.readline().decode('utf-8')
+    print("Starting move down:" + reading_endsquare)
+
+    x = reading_startsquare.split()
+    y = reading_endsquare.split()
+
+    fromsquare = BoardEvent(square_translations[int(x[0])], x[1])
+
+    tosquare = BoardEvent(square_translations[int(y[0])], y[1])
+    
+    move = chess.Move(fromsquare.square, tosquare.square)
+    print(move)
+
+    if move in board.legal_moves:
+        board.push(move)
+        print(board)
+        print("-------------")
+    else:
+        print(board)
+        input("Not a legal move! Put the board in the above position, then press enter.")
 
