@@ -7,8 +7,11 @@
 int row_pins[] = {34, 35};
 // columns are outputs
 int column_pins[] = {2, 3};
+
 int number_of_rows = 2;
 int number_of_columns = 2;
+
+int button_pin = 47;
 
 String str;
 
@@ -23,10 +26,20 @@ void setup() {
                 pinMode(column_pins[i], INPUT);
         }
 
+        pinMode(button_pin, INPUT_PULLUP);
+
         Serial.begin(9600);
 }
 
 void loop() {
+        static int lastButtonState = HIGH;
+        int buttonState = digitalRead(button_pin);
+        if(lastButtonState != buttonState && buttonState == LOW) {
+                Serial.println("B pressed");
+                delay(BOUNCE_DELAY);
+        }
+        lastButtonState = buttonState;
+
         // 64 zeros to represent the states of the pieces
         static uint64_t lastPieceState = LOW;
         // Loop over rows
