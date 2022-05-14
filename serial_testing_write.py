@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import serial
-port = '/dev/ttyACM0'
+port = '/dev/pts/3'
 
 ser = serial.Serial(port, 9600)
 

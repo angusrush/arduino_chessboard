@@ -11,10 +11,11 @@ class BoardEvent:
         self.square = square
         self.is_lift = piece_lifted
 
+#ser = serial.Serial('/dev/ttyACM0', 9600)
+ser = serial.Serial('/dev/pts/2', 9600)
 
-ser = serial.Serial('/dev/ttyACM0', 9600)
-
-square_translations = [0, 1, 8, 9]
+#square_translations = [0, 1, 8, 9]
+square_translations = [0, 1, 2, 3]
 
 starting_fen = "5rk1/5ppp/8/8/8/8/1q3PPP/Q4RK1 w - - 0 1"
 
@@ -40,9 +41,9 @@ while board.is_checkmate() == False:
     x = reading_startsquare.split()
     y = reading_endsquare.split()
 
-    fromsquare = BoardEvent(square_translations[int(x[0])], x[1])
+    fromsquare = BoardEvent(int(x[0]), x[1])
 
-    tosquare = BoardEvent(square_translations[int(y[0])], y[1])
+    tosquare = BoardEvent(int(y[0]), y[1])
     
     move = chess.Move(fromsquare.square, tosquare.square)
     print(move)
