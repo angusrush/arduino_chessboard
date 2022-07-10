@@ -2,14 +2,7 @@
 
 import serial
 import chess
-
-
-class BoardEvent:
-    def __init__(self, square, piece_lifted):
-        # square is a string, e.g. 'e2'.
-        # piece_lifted is a boolean: True means lifted, False means put down.
-        self.square = square
-        self.is_lift = piece_lifted
+from movebuilder import *
 
 #ser = serial.Serial('/dev/ttyACM0', 9600)
 ser = serial.Serial('/dev/pts/2', 9600)
@@ -41,10 +34,10 @@ while board.is_checkmate() == False:
     x = reading_startsquare.split()
     y = reading_endsquare.split()
 
-    fromsquare = BoardEvent(int(x[0]), x[1])
+    fromsquare = BoardEvent(reading_startsquare)
 
-    tosquare = BoardEvent(int(y[0]), y[1])
-    
+    tosquare = BoardEvent(reading_endsquare)
+
     move = chess.Move(fromsquare.square, tosquare.square)
     print(move)
 
