@@ -1,3 +1,4 @@
 tags
 plan.md
 __pycache__
+*.log

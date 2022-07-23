@@ -1,5 +1,6 @@
 import chess
 import queue
+import logging
 
 # Encodes a board event, e.g. "5 up" as:
 # self.square = 5
@@ -25,8 +26,13 @@ class BoardEvent:
                 print("Parsing error")
 
     def __str__(self):
-        return "square = " + str(self.square) + "; is_lift = " + str(self.is_lift)
+        if self.is_lift == True:
+            movement = "up"
+        else:
+            movement = "down"
+        return str(self.square) + " " + movement
 
+# Probably no longer needed!
 # Takes two boards as inputs, returns a list of tuples of the form
 # (Square square, Piece old_piece, Piece new_piece)
 # One tuple per changed
@@ -40,45 +46,56 @@ def compute_deltas(old_board, new_board):
 
     return deltas
 
-#def interpret_deltas(deltas):
-#    if len(deltas) == 2: # Either a normal move or a take
-#        for i in deltas:
-#            if i[2] == 
-
-
-
 class MoveBuilder:
     def __init__(self, board, serial_connection):
         # We want a copy of the board position, not the actual board position!
         self.start_position = chess.Board()
         self.start_position.set_piece_map(board.piece_map())
-        # We want a copy of the board position, not the actual board position!
+        # Same as above
         self.current_position = chess.Board()
         self.current_position.set_piece_map(board.piece_map())
         self.pieces_in_air = queue.Queue()
         self.ser = serial_connection
 
-    def listen_for_move(self): # Returns a Move (Not necessarily legal, but at least well-formed)
+    def listen_for_move(self): # Returns a leval Move
+        scratchboard = chess.Board()
         while True:
             raw_event = self.ser.readline().decode('utf-8')
 
             event = BoardEvent(raw_event)
-            
+
+            logging.info("Event recognized:" + str(event))
+
             if event.square == -1:
-                print(compute_deltas(self.start_position, self.current_position))
+                scratchboard.set_fen(self.start_position.fen())
+                for move in self.start_position.legal_moves:
+                    scratchboard.push(move)
+
+                    #logging.info("scratchboard is in position:\n"
+                    #             + str(scratchboard)
+                    #             + "\n---------------")
+
+                    if scratchboard.piece_map() == self.current_position.piece_map():
+
+                        logging.info(f"Legal move made: {move}")
+
+                        self.start_position.push(move)
+                        return move
+                    scratchboard.pop()
+                return chess.Move.null()
             else:
                 if event.is_lift == True:
                     piece = self.current_position.remove_piece_at(event.square)
                     if piece == None:
-                        print("You lifted a piece from an empty square!")
-                        print("People like you are the reason we have to implement error handling.")
+                        logging.error(f"Piece lifted from square {event.square}."
+                                      + "But that square is empty!")
                     self.pieces_in_air.put(piece)
-                    print(self.current_position)
                 if event.is_lift == False:
                     piece = self.pieces_in_air.get()
                     self.current_position.set_piece_at(event.square, piece)
-                    print(self.current_position)
-
-                print(list(self.pieces_in_air.queue))
-
+            
+            logging.info("Giving up on current event.\n")
+            print("Current board position:\n"
+                         + str(self.current_position)
+                         + "\n---------------")
 
