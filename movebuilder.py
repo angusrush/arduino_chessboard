@@ -25,39 +25,34 @@ class BoardEvent:
             else:
                 print("Parsing error")
 
+    # However, the string associated to such an event should be the original one.
     def __str__(self):
         if self.is_lift == True:
             movement = "up"
         else:
             movement = "down"
-        return str(self.square) + " " + movement
 
-# Probably no longer needed!
-# Takes two boards as inputs, returns a list of tuples of the form
-# (Square square, Piece old_piece, Piece new_piece)
-# One tuple per changed
-def compute_deltas(old_board, new_board):
-    deltas = []
-    for square in chess.SQUARES:
-        oldpiece = old_board.piece_at(square)
-        newpiece = new_board.piece_at(square)
-        if oldpiece != newpiece:
-            deltas.append((square, oldpiece, newpiece))
+        if self.square == -1:
+            square = "B"
+        else:
+            square = self.square
 
-    return deltas
+        return str(square) + " " + movement
 
+# The brains of the operation. Defines a function that
 class MoveBuilder:
     def __init__(self, board, serial_connection):
-        # We want a copy of the board position, not the actual board position!
+        # We want to store a copy of the board position, not the actual board
+        # position! i.e. we want to pass by value, not reference
         self.start_position = chess.Board()
-        self.start_position.set_piece_map(board.piece_map())
+        self.start_position.set_fen(board.fen())
         # Same as above
         self.current_position = chess.Board()
-        self.current_position.set_piece_map(board.piece_map())
+        self.current_position.set_fen(board.fen())
         self.pieces_in_air = queue.Queue()
         self.ser = serial_connection
 
-    def listen_for_move(self): # Returns a leval Move
+    def listen_for_move(self): # Returns a legal Move
         scratchboard = chess.Board()
         while True:
             raw_event = self.ser.readline().decode('utf-8')
@@ -94,7 +89,6 @@ class MoveBuilder:
                     piece = self.pieces_in_air.get()
                     self.current_position.set_piece_at(event.square, piece)
             
-            logging.info("Giving up on current event.\n")
             print("Current board position:\n"
                          + str(self.current_position)
                          + "\n---------------")
