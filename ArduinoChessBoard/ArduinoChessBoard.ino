@@ -71,4 +71,15 @@ void loop() {
                 // Then set the corresponding row low again
                 digitalWrite(row_pins[i], LOW);
         }
+
+        if(Serial.available() > 0){
+                char char_received = Serial.read();
+                if(char_received == 'a'){
+                        char piecemap[64];
+                        for(int i = 0; i < 64; i++){
+                                piecemap[i] = CHECK_BIT(lastPieceState, i);
+                        }
+                Serial.println("Hello");
+                }
+        }
 }
