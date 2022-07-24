@@ -29,10 +29,16 @@ events = ["13 up",
           "30 down",
           "B down",
           "59 up",
+          "52 down",
+          "52 up",
+          "45 down",
+          "45 up",
+          "38 down",
+          "38 up",
           "31 down",
           "B down"]
 
 for event in events:
     ser.write(bytes(event + "\n", encoding='utf8'))
-    time.sleep(2)
+    time.sleep(0.5)
 
