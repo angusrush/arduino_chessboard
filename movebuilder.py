@@ -18,6 +18,14 @@ class BoardEvent:
             self.is_lift = False
         else:
             self.square = int(raw_event[0])
+
+            # This part is just because the chessboard is only 2x2. Should be
+            # removed later.
+            if self.square == 2:
+                self.square = 8
+            elif self.square == 3:
+                self.square = 9
+
             if raw_event[1] == "up":
                 self.is_lift = True
             elif raw_event[1] == "down":
@@ -25,7 +33,7 @@ class BoardEvent:
             else:
                 print("Parsing error")
 
-    # However, the string associated to such an event should be the original one.
+    # The string associated to such an event should have the form of the original one
     def __str__(self):
         if self.is_lift == True:
             movement = "up"
@@ -52,13 +60,26 @@ class MoveBuilder:
         self.pieces_in_air = queue.Queue()
         self.ser = serial_connection
 
+    def set_up_pieces(self):
+        # listen for raw events until b is pressed
+        while BoardEvent(self.ser.readline().decode('utf-8')).square != -1:
+            continue
+
+    def set_up_pieces_and_check(self):
+        self.set_up_pieces()
+
+        # then request the bitmap of covered squares from the arduino
+        self.ser.write('a'.encode())
+        # and for now, just print it
+        print(self.ser.readline().decode('utf-8'))
+
     def listen_for_move(self): # Returns a legal Move
         scratchboard = chess.Board()
         while True:
+            # Whenever an event comes over the serial connection, return it,
+            # and log it
             raw_event = self.ser.readline().decode('utf-8')
-
             event = BoardEvent(raw_event)
-
             logging.info("Event recognized:" + str(event))
 
             if event.square == -1:
@@ -75,6 +96,7 @@ class MoveBuilder:
                         logging.info(f"Legal move made: {move}")
 
                         self.start_position.push(move)
+                        self.pieces_in_air.queue.clear()
                         return move
                     scratchboard.pop()
                 return chess.Move.null()
@@ -89,7 +111,5 @@ class MoveBuilder:
                     piece = self.pieces_in_air.get()
                     self.current_position.set_piece_at(event.square, piece)
             
-            print("Current board position:\n"
-                         + str(self.current_position)
-                         + "\n---------------")
+            print(str(self.current_position) + '\n\n')
 
