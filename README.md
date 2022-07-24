@@ -2,7 +2,7 @@
 
 ## Whose turn is it?!
 
-Smart Chessboard is a smart chessboard.
+Smart Chessboard is a smart chessboard. The hardware consists of a grid of reed switches read by an arduino. The arduino sends these signals to the computer over a serial connection, and they are interpreted by python.
 
 ## License
 
