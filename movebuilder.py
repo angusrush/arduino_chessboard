@@ -80,17 +80,15 @@ class MoveBuilder:
             # and log it
             raw_event = self.ser.readline().decode('utf-8')
             event = BoardEvent(raw_event)
-            logging.info("Event recognized:" + str(event))
+            logging.info("Event recognized: " + str(event))
 
+            # The button is the square indexed by -1
             if event.square == -1:
                 scratchboard.set_fen(self.start_position.fen())
                 for move in self.start_position.legal_moves:
                     scratchboard.push(move)
 
-                    #logging.info("scratchboard is in position:\n"
-                    #             + str(scratchboard)
-                    #             + "\n---------------")
-
+                    # This will be the case for all legal moves except promotions
                     if scratchboard.piece_map() == self.current_position.piece_map():
 
                         logging.info(f"Legal move made: {move}")
@@ -98,6 +96,7 @@ class MoveBuilder:
                         self.start_position.push(move)
                         self.pieces_in_air.queue.clear()
                         return move
+
                     scratchboard.pop()
                 return chess.Move.null()
             else:
