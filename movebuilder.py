@@ -99,9 +99,9 @@ class MoveBuilder:
             event = BoardEvent(raw_event)
             logging.info("Event recognized: " + str(event))
 
-            # The button is the square indexed by -1
+            # If the button is pressed...
             if event.square == -1:
-                # Create a scratchboard in the same position as the
+                # Set the scratchboard to the same position as the
                 # starting position of the move
                 scratchboard.set_fen(self.start_position.fen())
                 # For each legal move from the starting position...
@@ -115,14 +115,24 @@ class MoveBuilder:
                         # log it
                         logging.info(f"Legal move made: {move}")
 
-                        # push it to the starting position
+                        # and return it
                         return move
 
+                    # For a promotion, the scratchboard and the actual position
+                    # won't agree, so we have to be tricky.
+                    # If promotion is possible...
                     if move.promotion == chess.QUEEN:
+                        # and the position on the board and the promoted position
+                        # only differ by one piece...
                         deltas = compute_deltas(self.current_position, scratchboard)
                         if len(deltas) == 1:
+                            # then let the players know
+                            print("Promotion detected.")
+                            print(str(scratchboard) + '\n')
+                            # and return the promoted move.
                             return move
 
+                    # lastly, remove the move from the scratchboard.
                     scratchboard.pop()
 
                 return chess.Move.null()
@@ -133,10 +143,13 @@ class MoveBuilder:
                     if piece == None:
                         logging.error(f"Piece lifted from square {event.square}."
                                       + "But that square is empty!")
+                        print("You lifted a piece from an empty square!")
+                        return chess.Move.null()
                     self.pieces_in_air.put(piece)
                 if event.is_lift == False:
                     piece = self.pieces_in_air.get()
                     self.current_position.set_piece_at(event.square, piece)
-            
+
             print(str(self.current_position) + '\n')
+            
 
