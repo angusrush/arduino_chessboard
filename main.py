@@ -28,6 +28,10 @@ def main():
                         help='Display board in separate window')
     args = parser.parse_args()
 
+    # This records events and legal moves to events.log. Very handy!
+    logging.basicConfig(level=logging.DEBUG, filename='events.log')
+
+    # What exactly we initialize will depend on whether we're using the arduino.
     if args.testing:
         ser = serial.Serial('/dev/pts/2', 9600)
         board = chess.Board()
@@ -44,7 +48,6 @@ def main():
         print(board)
         mb.set_up_pieces()
 
-    logging.basicConfig(level=logging.DEBUG, filename='events.log')
 
     print("Starting new game.")
     logging.info("Starting new game.")
@@ -72,14 +75,41 @@ def main():
         else:
             board.push(move)
 
-        if board.is_checkmate() == True:
+        if board.is_checkmate():
             print(f"Checkmate! {to_move} wins!")
             print_game = input("Press y to print the game, anything else to exit")
             if print_game == 'y':
                 game = chess.pgn.Game.from_board(board)
                 print(game)
             break
-
+        else if board.is_stalemate():
+            print("Stalemate!")
+            print_game = input("Press y to print the game, anything else to exit")
+            if print_game == 'y':
+                game = chess.pgn.Game.from_board(board)
+                print(game)
+            break
+        else if board.is_insufficient_material):
+            print("Nobody has sufficient material to mate. Draw!")
+            print_game = input("Press y to print the game, anything else to exit")
+            if print_game == 'y':
+                game = chess.pgn.Game.from_board(board)
+                print(game)
+            break
+        else if board.is_seventyfive_moves():
+            print("Game is a draw by the 75 move rule. Astonishing.")
+            print_game = input("Press y to print the game, anything else to exit")
+            if print_game == 'y':
+                game = chess.pgn.Game.from_board(board)
+                print(game)
+            break
+        else if board.is_repetition():
+            print("This is a fivefold repetition, leading to a draw.")
+            print_game = input("Press y to print the game, anything else to exit")
+            if print_game == 'y':
+                game = chess.pgn.Game.from_board(board)
+                print(game)
+            break
 
 
 if __name__ == '__main__':
