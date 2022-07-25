@@ -21,10 +21,10 @@ class BoardEvent:
 
             # This part is just because the chessboard is only 2x2. Should be
             # removed later.
-            if self.square == 2:
-                self.square = 8
-            elif self.square == 3:
-                self.square = 9
+            #if self.square == 2:
+            #    self.square = 8
+            #elif self.square == 3:
+            #    self.square = 9
 
             if raw_event[1] == "up":
                 self.is_lift = True
