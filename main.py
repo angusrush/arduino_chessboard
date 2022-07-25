@@ -82,28 +82,28 @@ def main():
                 game = chess.pgn.Game.from_board(board)
                 print(game)
             break
-        else if board.is_stalemate():
+        elif board.is_stalemate():
             print("Stalemate!")
             print_game = input("Press y to print the game, anything else to exit")
             if print_game == 'y':
                 game = chess.pgn.Game.from_board(board)
                 print(game)
             break
-        else if board.is_insufficient_material):
+        elif board.is_insufficient_material():
             print("Nobody has sufficient material to mate. Draw!")
             print_game = input("Press y to print the game, anything else to exit")
             if print_game == 'y':
                 game = chess.pgn.Game.from_board(board)
                 print(game)
             break
-        else if board.is_seventyfive_moves():
+        elif board.is_seventyfive_moves():
             print("Game is a draw by the 75 move rule. Astonishing.")
             print_game = input("Press y to print the game, anything else to exit")
             if print_game == 'y':
                 game = chess.pgn.Game.from_board(board)
                 print(game)
             break
-        else if board.is_repetition():
+        elif board.is_repetition():
             print("This is a fivefold repetition, leading to a draw.")
             print_game = input("Press y to print the game, anything else to exit")
             if print_game == 'y':
