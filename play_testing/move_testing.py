@@ -42,6 +42,7 @@ events = ["14 up",
           "B down",
           "24 up",
           "17 down",
+          "25 up",
           "B down"]
 
 for event in events:
