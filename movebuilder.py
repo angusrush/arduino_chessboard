@@ -47,9 +47,23 @@ class BoardEvent:
 
         return str(square) + " " + movement
 
+# Takes two boards as inputs, returns a list of tuples of the form
+# (Square square, Piece old_piece, Piece new_piece)
+# One tuple per changed
+def compute_deltas(old_board, new_board):
+    deltas = []
+    for square in chess.SQUARES:
+        oldpiece = old_board.piece_at(square)
+        newpiece = new_board.piece_at(square)
+        if oldpiece != newpiece:
+            deltas.append((square, oldpiece, newpiece))
+
+    return deltas
+
 # The brains of the operation. Defines a function that
 class MoveBuilder:
     def __init__(self, board, serial_connection):
+        self.board = board
         # We want to store a copy of the board position, not the actual board
         # position! i.e. we want to pass by value, not reference
         self.start_position = chess.Board()
@@ -75,6 +89,9 @@ class MoveBuilder:
 
     def listen_for_move(self): # Returns a legal Move
         scratchboard = chess.Board()
+        self.start_position.set_fen(self.board.fen())
+        self.current_position.set_fen(self.board.fen())
+        self.pieces_in_air.queue.clear()
         while True:
             # Whenever an event comes over the serial connection, return it,
             # and log it
@@ -84,21 +101,32 @@ class MoveBuilder:
 
             # The button is the square indexed by -1
             if event.square == -1:
+                # Create a scratchboard in the same position as the
+                # starting position of the move
                 scratchboard.set_fen(self.start_position.fen())
+                # For each legal move from the starting position...
                 for move in self.start_position.legal_moves:
+                    # Push it to the scratchboard...
                     scratchboard.push(move)
-
-                    # This will be the case for all legal moves except promotions
+                    # and compare with the current position of the board.
+                    # If there's a match:
                     if scratchboard.piece_map() == self.current_position.piece_map():
 
+                        # log it
                         logging.info(f"Legal move made: {move}")
 
-                        self.start_position.push(move)
-                        self.pieces_in_air.queue.clear()
+                        # push it to the starting position
                         return move
 
+                    if move.promotion == chess.QUEEN:
+                        deltas = compute_deltas(self.current_position, scratchboard)
+                        if len(deltas) == 1:
+                            return move
+
                     scratchboard.pop()
+
                 return chess.Move.null()
+            # The event isn't a button press, so it's either a lift or a place
             else:
                 if event.is_lift == True:
                     piece = self.current_position.remove_piece_at(event.square)
@@ -110,5 +138,5 @@ class MoveBuilder:
                     piece = self.pieces_in_air.get()
                     self.current_position.set_piece_at(event.square, piece)
             
-            print(str(self.current_position) + '\n\n')
+            print(str(self.current_position) + '\n')
 
