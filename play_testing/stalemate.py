@@ -78,5 +78,5 @@ events = ["10 up",
 
 for event in events:
     ser.write(bytes(event + "\n", encoding='utf8'))
-    time.sleep(0.1)
+    time.sleep(0.7)
 
