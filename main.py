@@ -6,9 +6,11 @@ import chess.pgn
 import logging
 import argparse
 import sys
+from datetime import date
 from movebuilder import *
 import curses
 from curses import wrapper
+from curses.textpad import Textbox
 
 def main(stdscr):
     stdscr.clear()
@@ -76,18 +78,22 @@ def main(stdscr):
             messagewin.addstr(f"{not_to_move}'s move complete. {to_move} to move.")
             messagewin.refresh()
 
-        # Starts listening for a move. This will print out a bunch of board positions.
+        # Starts listening for a move. This will print out a bunch of intermediate board positions.
         move = mb.listen_for_move()
 
-        if not move:
+        if move:
+            board.push(move)
+        else:
             warningwin.clear()
             warningwin.addstr("The move was illegal! Please place the board in the\n"
                               "displayed position, then press any key.")
             warningwin.refresh()
+            boardwin.clear()
             boardwin.addstr(0, 0, str(board))
-            input("")
-        else:
-            board.push(move)
+            boardwin.refresh()
+            messagewin.getkey()
+            warningwin.clear()
+            warningwin.refresh()
 
         if board.is_checkmate():
             gameover_message = f"Checkmate! {to_move} wins!"
@@ -98,7 +104,7 @@ def main(stdscr):
         elif board.is_seventyfive_moves():
             gameover_message = "Game is a draw by the 75 move rule. Astonishing."
         elif board.is_repetition():
-            gameover_message = "This is a fivefold repetition, leading to a draw."
+            gameover_message = "Draw by fivefold repetition."
 
         if gameover_message:
             messagewin.clear()
@@ -106,10 +112,33 @@ def main(stdscr):
             messagewin.refresh()
 
             game = chess.pgn.Game.from_board(board)
+            game.headers["Date"] = str(date.today())
+            gameprintwin.clear()
             gameprintwin.addstr(str(game))
             gameprintwin.refresh()
-            input("")
-            sys.exit(0)
+
+            namewin_white = curses.newwin(1, 30, 15, 8)
+            namebox_white = Textbox(namewin_white)
+            namebox_white.edit()
+            message = namebox_white.gather()
+            game.headers["White"] = message.strip()
+            gameprintwin.clear()
+            gameprintwin.addstr(str(game))
+            gameprintwin.refresh()
+
+            namewin_black = curses.newwin(1, 30, 16, 8)
+            namebox_black = Textbox(namewin_black)
+            namebox_black.edit()
+            message = namebox_black.gather()
+            game.headers["Black"] = message.strip()
+            gameprintwin.clear()
+            gameprintwin.addstr(str(game))
+            gameprintwin.refresh()
+
+
+            keypress = messagewin.getkey()
+            if keypress == 'q':
+                sys.exit(0)
 
 if __name__ == '__main__':
     wrapper(main)

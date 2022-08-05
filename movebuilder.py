@@ -9,7 +9,7 @@ import logging
 # self.square = -1
 # self.is_lift = False
 class BoardEvent:
-    def __init__(self, event_string):
+    def __init__(self, event_string, errorwin):
         # square is a number between 0 and 63
         # is_lift is a boolean: True means lifted, False means put down.
         raw_event = event_string.split()
@@ -17,21 +17,26 @@ class BoardEvent:
             self.square = -1
             self.is_lift = False
         else:
-            self.square = int(raw_event[0])
+            try:
+                self.square = int(raw_event[0])
 
-            # This part is just because the chessboard is only 2x2. Should be
-            # removed later.
-            #if self.square == 2:
-            #    self.square = 8
-            #elif self.square == 3:
-            #    self.square = 9
+                # This part is just because the chessboard is only 2x2. Should be
+                # removed later.
+                #if self.square == 2:
+                #    self.square = 8
+                #elif self.square == 3:
+                #    self.square = 9
 
-            if raw_event[1] == "up":
-                self.is_lift = True
-            elif raw_event[1] == "down":
-                self.is_lift = False
-            else:
-                print("Parsing error")
+                if raw_event[1] == "up":
+                    self.is_lift = True
+                elif raw_event[1] == "down":
+                    self.is_lift = False
+            except:
+                errorwin.clear()
+                errorwin.addstr("Parsing error!")
+                errorwin.refresh()
+                errorwin.getkey()
+
 
     # The string associated to such an event should have the form of the original one
     def __str__(self):
@@ -80,7 +85,7 @@ class MoveBuilder:
     # Listen and ignore raw events until button is pressed. Useful because
     # events sent by the arduino befure the game begins should be ignored
     def set_up_pieces(self):
-        while BoardEvent(self.ser.readline().decode('utf-8')).square != -1:
+        while BoardEvent(self.ser.readline().decode('utf-8'), self.errorwin).square != -1:
             continue
 
     def set_up_pieces_and_check(self):
@@ -100,7 +105,7 @@ class MoveBuilder:
             # Whenever an event comes over the serial connection, return it,
             # and log it
             raw_event = self.ser.readline().decode('utf-8')
-            event = BoardEvent(raw_event)
+            event = BoardEvent(raw_event, self.errorwin)
             logging.info("Event recognized: " + str(event))
 
             # If the event comes from the button being pressed...
