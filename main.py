@@ -8,6 +8,7 @@ import argparse
 import sys
 from datetime import date
 from movebuilder import *
+from curses_display import *
 import curses
 from curses import wrapper
 from curses.textpad import Textbox
@@ -30,35 +31,29 @@ def main(stdscr):
     # This records events and legal moves to events.log. Very handy!
     logging.basicConfig(level=logging.DEBUG, filename='events.log')
 
+    # The game sets this when the game ends, so the rest of the program
+    # knows what happened. Hacky, but it works fine.
     gameover_message = ""
 
-    boardwin = curses.newwin(8, 16, 0, 0)
-    messagewin = curses.newwin(1, 80, 9, 0)
-    warningwin = curses.newwin(2, 60, 3, 20)
-    gameprintwin = curses.newwin(15, 80, 11, 0)
+    tui = CursesBoardTui()
 
     # What exactly we initialize will depend on whether we're using the arduino.
     if args.testing:
         ser = serial.Serial('/dev/pts/2', 9600)
         board = chess.Board()
-        mb = MoveBuilder(board, ser, boardwin, messagewin, warningwin)
-        boardwin.addstr(str(board))
-        boardwin.refresh()
+        mb = MoveBuilder(board, ser, tui)
+        tui.print_board(board)
 
     else:
         ser = serial.Serial('/dev/ttyACM0', 9600)
         starting_fen = "5rk1/5ppp/8/8/8/8/1q3PPP/Q4RK1 w - - 0 1"
         board = chess.Board(fen = starting_fen)
-        mb = MoveBuilder(board, ser, boardwin, messagewin, warningwin)
-        messagewin.addstr("Board set with starting configuration")
-        messagewin.refresh()
-        boardwin.addstr(str(board))
-        boardwin.refresh()
+        mb = MoveBuilder(board, ser, tui)
+        tui.print_message("Board set with starting configuration")
+        tui.print_board(board)
         mb.set_up_pieces()
 
-    messagewin.clear()
-    messagewin.addstr("Starting new game.")
-    messagewin.refresh()
+    tui.print_message("Starting new game.")
     logging.info("Starting new game.")
 
     while True:
@@ -70,13 +65,9 @@ def main(stdscr):
             not_to_move = "White"
 
         if board.fullmove_number == 1 and to_move == "White":
-            messagewin.clear()
-            messagewin.addstr(f"{to_move} to move.")
-            messagewin.refresh()
+            tui.print_message(f"{to_move} to move.")
         else:
-            messagewin.clear()
-            messagewin.addstr(f"{not_to_move}'s move complete. {to_move} to move.")
-            messagewin.refresh()
+            tui.print_message(f"{not_to_move}'s move complete. {to_move} to move.")
 
         # Starts listening for a move. This will print out a bunch of intermediate board positions.
         move = mb.listen_for_move()
@@ -84,17 +75,12 @@ def main(stdscr):
         if move:
             board.push(move)
         else:
-            warningwin.clear()
-            warningwin.addstr("The move was illegal! Please place the board in the\n"
-                              "displayed position, then press any key.")
-            warningwin.refresh()
-            boardwin.clear()
-            boardwin.addstr(0, 0, str(board))
-            boardwin.refresh()
-            messagewin.getkey()
-            warningwin.clear()
-            warningwin.refresh()
+            tui.print_board(board)
+            tui.print_warning_and_wait("The move was illegal! Please place the " 
+                                       "board in the\n displayed position, then "
+                                       "press any key.")
 
+        # Check for various things which would mean that the game was over
         if board.is_checkmate():
             gameover_message = f"Checkmate! {to_move} wins!"
         elif board.is_stalemate():
@@ -106,37 +92,37 @@ def main(stdscr):
         elif board.is_repetition():
             gameover_message = "Draw by fivefold repetition."
 
+        # And if the game is over...
         if gameover_message:
-            messagewin.clear()
-            messagewin.addstr(gameover_message)
-            messagewin.refresh()
+            tui.print_message(gameover_message)
 
             game = chess.pgn.Game.from_board(board)
             game.headers["Date"] = str(date.today())
-            gameprintwin.clear()
-            gameprintwin.addstr(str(game))
-            gameprintwin.refresh()
+            tui.gameprintwin.clear()
+            tui.gameprintwin.addstr(str(game))
+            tui.gameprintwin.refresh()
 
             namewin_white = curses.newwin(1, 30, 15, 8)
             namebox_white = Textbox(namewin_white)
             namebox_white.edit()
             message = namebox_white.gather()
             game.headers["White"] = message.strip()
-            gameprintwin.clear()
-            gameprintwin.addstr(str(game))
-            gameprintwin.refresh()
+            tui.gameprintwin.clear()
+            tui.gameprintwin.addstr(str(game))
+            tui.gameprintwin.refresh()
 
             namewin_black = curses.newwin(1, 30, 16, 8)
             namebox_black = Textbox(namewin_black)
             namebox_black.edit()
             message = namebox_black.gather()
             game.headers["Black"] = message.strip()
-            gameprintwin.clear()
-            gameprintwin.addstr(str(game))
-            gameprintwin.refresh()
+            tui.gameprintwin.clear()
+            tui.gameprintwin.addstr(str(game))
+            tui.gameprintwin.refresh()
 
+            tui.print_warning("Press 'q' to exit.")
 
-            keypress = messagewin.getkey()
+            keypress = tui.messagewin.getkey()
             if keypress == 'q':
                 sys.exit(0)
 

@@ -9,7 +9,7 @@ import logging
 # self.square = -1
 # self.is_lift = False
 class BoardEvent:
-    def __init__(self, event_string, errorwin):
+    def __init__(self, event_string, tui):
         # square is a number between 0 and 63
         # is_lift is a boolean: True means lifted, False means put down.
         raw_event = event_string.split()
@@ -17,25 +17,19 @@ class BoardEvent:
             self.square = -1
             self.is_lift = False
         else:
-            try:
-                self.square = int(raw_event[0])
+            self.square = int(raw_event[0])
 
-                # This part is just because the chessboard is only 2x2. Should be
-                # removed later.
-                #if self.square == 2:
-                #    self.square = 8
-                #elif self.square == 3:
-                #    self.square = 9
+            # This part is just because the chessboard is only 2x2. Should be
+            # removed later.
+            #if self.square == 2:
+            #    self.square = 8
+            #elif self.square == 3:
+            #    self.square = 9
 
-                if raw_event[1] == "up":
-                    self.is_lift = True
-                elif raw_event[1] == "down":
-                    self.is_lift = False
-            except:
-                errorwin.clear()
-                errorwin.addstr("Parsing error!")
-                errorwin.refresh()
-                errorwin.getkey()
+            if raw_event[1] == "up":
+                self.is_lift = True
+            elif raw_event[1] == "down":
+                self.is_lift = False
 
 
     # The string associated to such an event should have the form of the original one
@@ -67,7 +61,7 @@ def compute_deltas(old_board, new_board):
 
 # The brains of the operation. Defines a function that
 class MoveBuilder:
-    def __init__(self, board, serial_connection, boardwin, messagewin, errorwin):
+    def __init__(self, board, serial_connection, tui):
         self.board = board
         # We want to store a copy of the board position, not the actual board
         # position! i.e. we want to pass by value, not reference
@@ -78,14 +72,13 @@ class MoveBuilder:
         self.current_position.set_fen(board.fen())
         self.pieces_in_air = queue.Queue()
         self.ser = serial_connection
-        self.boardwin = boardwin
-        self.messagewin = messagewin
-        self.errorwin = errorwin
+        self.tui = tui
 
     # Listen and ignore raw events until button is pressed. Useful because
     # events sent by the arduino befure the game begins should be ignored
     def set_up_pieces(self):
-        while BoardEvent(self.ser.readline().decode('utf-8'), self.errorwin).square != -1:
+        while BoardEvent(self.ser.readline().decode('utf-8'),
+                         self.tui).square != -1:
             continue
 
     def set_up_pieces_and_check(self):
@@ -105,7 +98,12 @@ class MoveBuilder:
             # Whenever an event comes over the serial connection, return it,
             # and log it
             raw_event = self.ser.readline().decode('utf-8')
-            event = BoardEvent(raw_event, self.errorwin)
+            try:
+                event = BoardEvent(raw_event, self.tui)
+            except:
+                self.tui.print_warning("Parsing error!")
+                break
+
             logging.info("Event recognized: " + str(event))
 
             # If the event comes from the button being pressed...
@@ -136,12 +134,8 @@ class MoveBuilder:
                         deltas = compute_deltas(self.current_position, scratchboard)
                         if len(deltas) == 1:
                             # then let the players know
-                            self.errorwin.clear()
-                            self.errorwin.addstr("Promotion detected.")
-                            self.errorwin.refresh()
-                            self.boardwin.clear()
-                            self.boardwin.addstr(str(scratchboard))
-                            self.boardwin.refresh()
+                            self.tui.print_warning("Promotion detected")
+                            self.tui.print_board(scratchboard)
                             # and return the promoted move.
                             return move
 
@@ -156,9 +150,7 @@ class MoveBuilder:
                     if piece == None:
                         logging.error(f"Piece lifted from square {event.square}."
                                       + "But that square is empty!")
-                        self.errorwin.clear()
-                        self.errorwin.addstr("You lifted a piece from an empty square!")
-                        self.errorwin.refresh()
+                        self.print_error("You lifted a piece from an empty square!")
                         return chess.Move.null()
                     self.pieces_in_air.put(piece)
                 if event.is_lift == False:
@@ -166,8 +158,6 @@ class MoveBuilder:
                     self.current_position.set_piece_at(event.square, piece)
 
             # The board display should display the actual position on the physical chessoard
-            self.boardwin.clear()
-            self.boardwin.addstr(str(self.current_position))
-            self.boardwin.refresh()
+            self.tui.print_board(self.current_position)
             
 
