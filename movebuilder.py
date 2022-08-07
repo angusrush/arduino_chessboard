@@ -145,17 +145,21 @@ class MoveBuilder:
                 return chess.Move.null()
             # The event isn't a button press, so it's either a lift or a place
             else:
-                if event.is_lift == True:
+                if event.is_lift:
                     piece = self.current_position.remove_piece_at(event.square)
                     if piece == None:
                         logging.error(f"Piece lifted from square {event.square}."
                                       + "But that square is empty!")
-                        self.print_error("You lifted a piece from an empty square!")
+                        self.tui.print_warning("You lifted a piece from an empty square!")
                         return chess.Move.null()
                     self.pieces_in_air.put(piece)
-                if event.is_lift == False:
-                    piece = self.pieces_in_air.get()
-                    self.current_position.set_piece_at(event.square, piece)
+                else:
+                    try:
+                        piece = self.pieces_in_air.get(False)
+                        self.current_position.set_piece_at(event.square, piece)
+                    except:
+                        self.tui.print_warning("You tried to place a piece, but you're "
+                                               "not holding one!")
 
             # The board display should display the actual position on the physical chessoard
             self.tui.print_board(self.current_position)

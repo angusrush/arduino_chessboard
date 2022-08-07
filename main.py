@@ -12,6 +12,7 @@ from curses_display import *
 import curses
 from curses import wrapper
 from curses.textpad import Textbox
+from write_pgn import write_pgn
 
 def main(stdscr):
     stdscr.clear()
@@ -120,10 +121,14 @@ def main(stdscr):
             tui.gameprintwin.addstr(str(game))
             tui.gameprintwin.refresh()
 
-            tui.print_warning("Press 'q' to exit.")
+            tui.print_warning("Press 'q' to exit,\n"
+                              "or 'w' to write PGN")
 
             keypress = tui.messagewin.getkey()
             if keypress == 'q':
+                sys.exit(0)
+            elif keypress == 'w':
+                write_pgn(game)
                 sys.exit(0)
 
 if __name__ == '__main__':
