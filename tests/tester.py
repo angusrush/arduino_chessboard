@@ -14,7 +14,7 @@ try:
 
     for event in events:
         ser.write(bytes(event, encoding='utf8'))
-        print(event)
+        print(port + ": " + str(event), end="")
         time.sleep(0.5)
 except:
     pass
