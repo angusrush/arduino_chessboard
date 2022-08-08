@@ -12,6 +12,7 @@ class CursesBoardTui:
         self.messagewin = curses.newwin(1, 80, 9, 0)
         self.warningwin = curses.newwin(2, 60, 3, 20)
         self.gameprintwin = curses.newwin(15, 80, 11, 0)
+        self.pieceswin = curses.newwin(2, 30, 0, 20)
 
     def print_board(self, board):
         self.boardwin.clear()
@@ -40,6 +41,13 @@ class CursesBoardTui:
         self.gameprintwin.clear()
         self.gameprintwin.addstr(str(game))
         self.gameprintwin.refresh()
+
+    def print_pieces(self, pieces):
+        piece_list = list(map(lambda x: x.symbol(), list(pieces.queue)))
+        string = "Pieces in air:\n" + ", ".join(piece_list)
+        self.pieceswin.clear()
+        self.pieceswin.addstr(string)
+        self.pieceswin.refresh()
 
     def prompt_name():
         namewin_white = curses.newwin(1, 30, 15, 8)
