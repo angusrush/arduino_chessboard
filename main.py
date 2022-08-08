@@ -11,7 +11,8 @@ import curses
 from curses import wrapper
 from curses.textpad import Textbox
 
-sys.path.insert(0, "./src")
+# My code is mostly in ./src/*
+sys.path.insert(0, "src")
 
 from movebuilder import *
 from curses_tui import *
@@ -77,7 +78,12 @@ def main(stdscr):
         move = None
         try:
             move = mb.listen_for_move()
-        except:
+        except KeyboardInterrupt:
+            sys.exit(0)
+        except ParsingError:
+            tui.print_board(board)
+            mb.pieces_in_air.queue.clear()
+            tui.print_pieces(mb.pieces_in_air)
             tui.print_warning_and_wait("Parsing error! Please place the " 
                                        "board in the\n displayed position, then "
                                        "press any key.")

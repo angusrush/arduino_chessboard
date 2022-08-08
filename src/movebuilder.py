@@ -17,29 +17,34 @@ class BoardEvent:
     def __init__(self, event_string, tui):
         # square is a number between 0 and 63
         # is_lift is a boolean: True means lifted, False means put down.
-        raw_event = event_string.split()
-        if raw_event[0] == 'B':
-            self.square = -1
-            self.is_lift = False
-        else:
-            self.square = int(raw_event[0])
-
-            # This part is just because the chessboard is only 2x2. Should be
-            # removed later.
-            #if self.square == 2:
-            #    self.square = 8
-            #elif self.square == 3:
-            #    self.square = 9
-
-            if raw_event[1] == "up":
-                self.is_lift = True
-            elif raw_event[1] == "down":
+        try:
+            raw_event = event_string.split()
+            if raw_event[0] == 'B':
+                self.square = -1
                 self.is_lift = False
+            else:
+                self.square = int(raw_event[0])
+
+                # This part is just because the chessboard is only 2x2. Should be
+                # removed later.
+                #if self.square == 2:
+                #    self.square = 8
+                #elif self.square == 3:
+                #    self.square = 9
+
+                if raw_event[1] == "up":
+                    self.is_lift = True
+                elif raw_event[1] == "down":
+                    self.is_lift = False
+                else:
+                    raise ParsingError
+        except:
+            raise ParsingError
 
 
     # The string associated to such an event should have the form of the original one
     def __str__(self):
-        if self.is_lift == True:
+        if self.is_lift:
             movement = "up"
         else:
             movement = "down"
@@ -108,8 +113,6 @@ class MoveBuilder:
                 event = BoardEvent(raw_event, self.tui)
             except:
                 raise ParsingError
-                self.tui.print_warning("Parsing error!")
-                break
 
             logging.info("Event recognized: " + str(event))
 
@@ -158,7 +161,6 @@ class MoveBuilder:
                     if piece == None:
                         logging.error(f"Piece lifted from square {event.square}. "
                                       "But that square is empty!")
-                        self.current_position.set_fen(self.starting_position.fen())
                         raise ParsingError
                     self.pieces_in_air.put(piece)
                     self.tui.print_pieces(self.pieces_in_air)
@@ -168,7 +170,6 @@ class MoveBuilder:
                         self.current_position.set_piece_at(event.square, piece)
                         self.tui.print_pieces(self.pieces_in_air)
                     except:
-                        self.current_position.set_fen(self.starting_position.fen())
                         self.tui.print_pieces(self.pieces_in_air)
                         raise ParsingError
 
