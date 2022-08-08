@@ -71,11 +71,17 @@ def main(stdscr):
             tui.print_message(f"{not_to_move}'s move complete. {to_move} to move.")
 
         # Starts listening for a move. This will print out a bunch of intermediate board positions.
-        move = mb.listen_for_move()
+        move = None
+        try:
+            move = mb.listen_for_move()
+        except:
+            tui.print_warning_and_wait("Parsing error! Please place the " 
+                                       "board in the\n displayed position, then "
+                                       "press any key.")
 
         if move:
             board.push(move)
-        else:
+        elif move == chess.Move.null():
             tui.print_board(board)
             tui.print_warning_and_wait("The move was illegal! Please place the " 
                                        "board in the\n displayed position, then "

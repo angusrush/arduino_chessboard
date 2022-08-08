@@ -2,6 +2,11 @@ import chess
 import queue
 import logging
 
+class ParsingError(Exception):
+    pass
+class IllegalMove(Exception):
+    pass
+
 # Encodes a board event, e.g. "5 up" as:
 # self.square = 5
 # self.is_lift = True
@@ -59,7 +64,8 @@ def compute_deltas(old_board, new_board):
 
     return deltas
 
-# The brains of the operation. Defines a function that
+# The MoveBuilder class contains everything needed to turn streams of events
+# into a chess Move.
 class MoveBuilder:
     def __init__(self, board, serial_connection, tui):
         self.board = board
@@ -101,6 +107,7 @@ class MoveBuilder:
             try:
                 event = BoardEvent(raw_event, self.tui)
             except:
+                raise ParsingError
                 self.tui.print_warning("Parsing error!")
                 break
 
@@ -147,19 +154,23 @@ class MoveBuilder:
             else:
                 if event.is_lift:
                     piece = self.current_position.remove_piece_at(event.square)
+                    # If we tried to pick up a piece, but there was no piece to pick up...
                     if piece == None:
-                        logging.error(f"Piece lifted from square {event.square}."
-                                      + "But that square is empty!")
-                        self.tui.print_warning("You lifted a piece from an empty square!")
-                        return chess.Move.null()
+                        logging.error(f"Piece lifted from square {event.square}. "
+                                      "But that square is empty!")
+                        self.current_position.set_fen(self.starting_position.fen())
+                        raise ParsingError
                     self.pieces_in_air.put(piece)
+                    self.tui.print_pieces(self.pieces_in_air)
                 else:
                     try:
                         piece = self.pieces_in_air.get(False)
                         self.current_position.set_piece_at(event.square, piece)
+                        self.tui.print_pieces(self.pieces_in_air)
                     except:
-                        self.tui.print_warning("You tried to place a piece, but you're "
-                                               "not holding one!")
+                        self.current_position.set_fen(self.starting_position.fen())
+                        self.tui.print_pieces(self.pieces_in_air)
+                        raise ParsingError
 
             # The board display should display the actual position on the physical chessoard
             self.tui.print_board(self.current_position)
