@@ -7,11 +7,14 @@ import logging
 import argparse
 import sys
 from datetime import date
-from movebuilder import *
-from curses_tui import *
 import curses
 from curses import wrapper
 from curses.textpad import Textbox
+
+sys.path.insert(0, "./src")
+
+from movebuilder import *
+from curses_tui import *
 from write_pgn import write_pgn
 
 def main(stdscr):
