@@ -8,7 +8,7 @@ import argparse
 import sys
 from datetime import date
 from movebuilder import *
-from curses_display import *
+from curses_tui import *
 import curses
 from curses import wrapper
 from curses.textpad import Textbox
