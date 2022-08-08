@@ -1,7 +1,7 @@
 #define CHECK_BIT(var, pos) (((var)>>(pos)) & 1)
 #define TOGGLE_BIT(var, pos) (var ^= (1L << pos))
 
-#define BOUNCE_DELAY 500
+#define BOUNCE_DELAY 50
 
 // Rows are inputs
 int row_pins[] = {34, 35};
