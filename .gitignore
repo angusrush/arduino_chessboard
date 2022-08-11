@@ -3,3 +3,4 @@ plan.md
 __pycache__
 *.log
 past_games
+pyrightconfig.json
