@@ -1,4 +1,7 @@
 import curses
+import chess
+import chess.pgn
+import queue
 from curses.textpad import Textbox
 
 
@@ -12,22 +15,22 @@ class CursesBoardTui:
         self.gameprintwin = curses.newwin(15, 80, 11, 0)
         self.pieceswin = curses.newwin(2, 30, 0, 20)
 
-    def print_board(self, board) -> None:
+    def print_board(self, board: chess.Board) -> None:
         self.boardwin.clear()
         self.boardwin.addstr(str(board))
         self.boardwin.refresh()
 
-    def print_message(self, message) -> None:
+    def print_message(self, message: str) -> None:
         self.messagewin.clear()
         self.messagewin.addstr(message)
         self.messagewin.refresh()
 
-    def print_warning(self, warning) -> None:
+    def print_warning(self, warning: str) -> None:
         self.warningwin.clear()
         self.warningwin.addstr(warning)
         self.warningwin.refresh()
 
-    def print_warning_and_wait(self, warning) -> None:
+    def print_warning_and_wait(self, warning: str) -> None:
         self.warningwin.clear()
         self.warningwin.addstr(warning)
         self.warningwin.refresh()
@@ -35,12 +38,12 @@ class CursesBoardTui:
         self.warningwin.clear()
         self.warningwin.refresh()
 
-    def print_pgn(self, pgn) -> None:
+    def print_pgn(self, pgn: chess.pgn.Game) -> None:
         self.gameprintwin.clear()
         self.gameprintwin.addstr(str(pgn))
         self.gameprintwin.refresh()
 
-    def print_pieces(self, pieces) -> None:
+    def print_pieces(self, pieces: queue.Queue[chess.Piece]) -> None:
         piece_list = list(map(lambda x: x.symbol(), list(pieces.queue)))
         string = "Pieces in air:\n" + ", ".join(piece_list)
         self.pieceswin.clear()

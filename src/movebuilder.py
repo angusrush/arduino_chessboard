@@ -1,3 +1,5 @@
+# pyright: strict
+
 import chess
 import queue
 import logging
@@ -98,7 +100,7 @@ class MoveBuilder:
         self.start_position = deepcopy(board)
         self.current_position = deepcopy(board)
 
-        self.pieces_in_air = queue.Queue()
+        self.pieces_in_air: queue.Queue[chess.Piece] = queue.Queue()
         self.ser: serial.Serial = serial_connection
         self.tui: curses_tui.CursesBoardTui = tui
 

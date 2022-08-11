@@ -1,7 +1,10 @@
+# pyright: strict
+
+import chess.pgn
 from datetime import datetime
 
 
-def filename(pgn) -> str:
+def filename(pgn: chess.pgn.Game) -> str:
     now = datetime.now()
     datestring = now.strftime("%y.%m.%d_%H:%M")
 
@@ -17,7 +20,7 @@ def filename(pgn) -> str:
     return "_".join(string_blocks) + ".pgn"
 
 
-def write_pgn(pgn) -> None:
+def write_pgn(pgn: chess.pgn.Game) -> None:
     name = filename(pgn)
     folder = "./past_games/"
     f = open(folder + name, "a")
