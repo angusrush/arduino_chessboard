@@ -96,6 +96,11 @@ def main(stdscr):
                                        "board in the\n displayed position, then "
                                        "press any key.")
 
+        game = chess.pgn.Game.from_board(board)
+        tui.gameprintwin.clear()
+        tui.gameprintwin.addstr(str(game))
+        tui.gameprintwin.refresh()
+
         # Check for various things which would mean that the game was over
         if board.is_checkmate():
             gameover_message = f"Checkmate! {to_move} wins!"
