@@ -1,5 +1,6 @@
 from datetime import datetime
 
+
 def filename(pgn):
     now = datetime.now()
     datestring = now.strftime("%y.%m.%d_%H:%M")
@@ -14,6 +15,7 @@ def filename(pgn):
     string_blocks = [datestring, white_name, game_result, black_name]
 
     return "_".join(string_blocks) + ".pgn"
+
 
 def write_pgn(pgn):
     name = filename(pgn)

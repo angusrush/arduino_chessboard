@@ -69,10 +69,3 @@ class CursesBoardTui:
         self.gameprintwin.clear()
         self.gameprintwin.addstr(str(game))
         self.gameprintwin.refresh()
-
-
-
-
-
-
-

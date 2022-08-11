@@ -2,10 +2,14 @@ import chess
 import queue
 import logging
 
+
 class ParsingError(Exception):
     pass
+
+
 class IllegalMove(Exception):
     pass
+
 
 # Encodes a board event, e.g. "5 up" as:
 # self.square = 5
@@ -19,7 +23,7 @@ class BoardEvent:
             # square is a number between 0 and 63
             # is_lift is a boolean: True means lifted, False means put down.
             raw_event = event_string.split()
-            if raw_event[0] == 'B':
+            if raw_event[0] == "B":
                 self.square = -1
                 self.is_lift = False
             else:
@@ -27,9 +31,9 @@ class BoardEvent:
 
                 # This part is just because the chessboard is only 2x2. Should be
                 # removed later.
-                #if self.square == 2:
+                # if self.square == 2:
                 #    self.square = 8
-                #elif self.square == 3:
+                # elif self.square == 3:
                 #    self.square = 9
 
                 if raw_event[1] == "up":
@@ -40,7 +44,6 @@ class BoardEvent:
                     raise ParsingError
         except:
             raise ParsingError
-
 
     # The string associated to such an event should have the form of the original one
     def __str__(self):
@@ -56,6 +59,7 @@ class BoardEvent:
 
         return str(square) + " " + movement
 
+
 # Takes two boards as inputs, returns a list of tuples of the form
 # (Square square, Piece old_piece, Piece new_piece)
 # One tuple per changed
@@ -68,6 +72,7 @@ def compute_deltas(old_board, new_board):
             deltas.append((square, oldpiece, newpiece))
 
     return deltas
+
 
 # The MoveBuilder class contains everything needed to turn streams of events
 # into a chess Move.
@@ -88,19 +93,18 @@ class MoveBuilder:
     # Listen and ignore raw events until button is pressed. Useful because
     # events sent by the arduino befure the game begins should be ignored
     def set_up_pieces(self):
-        while BoardEvent(self.ser.readline().decode('utf-8'),
-                         self.tui).square != -1:
+        while BoardEvent(self.ser.readline().decode("utf-8"), self.tui).square != -1:
             continue
 
     def set_up_pieces_and_check(self):
         self.set_up_pieces()
 
         # then request the bitmap of covered squares from the arduino
-        self.ser.write('a'.encode())
+        self.ser.write("a".encode())
         # and for now, just print it
-        print(self.ser.readline().decode('utf-8'))
+        print(self.ser.readline().decode("utf-8"))
 
-    def listen_for_move(self): # Returns a legal Move
+    def listen_for_move(self):  # Returns a legal Move
         scratchboard = chess.Board()
         self.start_position.set_fen(self.board.fen())
         self.current_position.set_fen(self.board.fen())
@@ -108,7 +112,7 @@ class MoveBuilder:
         while True:
             # Whenever an event comes over the serial connection, return it,
             # and log it
-            raw_event = self.ser.readline().decode('utf-8')
+            raw_event = self.ser.readline().decode("utf-8")
             try:
                 event = BoardEvent(raw_event, self.tui)
             except:
@@ -159,8 +163,10 @@ class MoveBuilder:
                     piece = self.current_position.remove_piece_at(event.square)
                     # If we tried to pick up a piece, but there was no piece to pick up...
                     if piece == None:
-                        logging.error(f"Piece lifted from square {event.square}. "
-                                      "But that square is empty!")
+                        logging.error(
+                            f"Piece lifted from square {event.square}. "
+                            "But that square is empty!"
+                        )
                         raise ParsingError
                     self.pieces_in_air.put(piece)
                     self.tui.print_pieces(self.pieces_in_air)
@@ -175,5 +181,3 @@ class MoveBuilder:
 
             # The board display should display the actual position on the physical chessoard
             self.tui.print_board(self.current_position)
-            
-

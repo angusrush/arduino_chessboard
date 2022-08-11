@@ -18,23 +18,27 @@ from movebuilder import *
 from curses_tui import *
 from write_pgn import write_pgn
 
+
 def main(stdscr):
     stdscr.clear()
 
     # If we start with the --testing, or -t, flag, we use virtual ports
     # governed by the computer. If we don't, we start listening at the usual
     # port connected to by our arduino.
-    parser = argparse.ArgumentParser(description='parse arguments'
-                                     + 'for smart chess board')
-    parser.add_argument('-t',
-                        '--testing',
-                        action='store_true',
-                        help='Testing mode, handles input differently')
+    parser = argparse.ArgumentParser(
+        description="parse arguments" + "for smart chess board"
+    )
+    parser.add_argument(
+        "-t",
+        "--testing",
+        action="store_true",
+        help="Testing mode, handles input differently",
+    )
 
     args = parser.parse_args()
 
     # This records events and legal moves to events.log. Very handy!
-    logging.basicConfig(level=logging.DEBUG, filename='events.log')
+    logging.basicConfig(level=logging.DEBUG, filename="events.log")
 
     # The game sets this when the game ends, so the rest of the program
     # knows what happened. Hacky, but it works fine.
@@ -44,15 +48,15 @@ def main(stdscr):
 
     # What exactly we initialize will depend on whether we're using the arduino.
     if args.testing:
-        ser = serial.Serial('/dev/pts/2', 9600)
+        ser = serial.Serial("/dev/pts/2", 9600)
         board = chess.Board()
         mb = MoveBuilder(board, ser, tui)
         tui.print_board(board)
 
     else:
-        ser = serial.Serial('/dev/ttyACM0', 9600)
+        ser = serial.Serial("/dev/ttyACM0", 9600)
         starting_fen = "5rk1/5ppp/8/8/8/8/1q3PPP/Q4RK1 w - - 0 1"
-        board = chess.Board(fen = starting_fen)
+        board = chess.Board(fen=starting_fen)
         mb = MoveBuilder(board, ser, tui)
         tui.print_message("Board set with starting configuration")
         tui.print_board(board)
@@ -84,17 +88,21 @@ def main(stdscr):
             tui.print_board(board)
             mb.pieces_in_air.queue.clear()
             tui.print_pieces(mb.pieces_in_air)
-            tui.print_warning_and_wait("Parsing error! Please place the " 
-                                       "board in the\n displayed position, then "
-                                       "press any key.")
+            tui.print_warning_and_wait(
+                "Parsing error! Please place the "
+                "board in the\n displayed position, then "
+                "press any key."
+            )
 
         if move:
             board.push(move)
         elif move == chess.Move.null():
             tui.print_board(board)
-            tui.print_warning_and_wait("The move was illegal! Please place the " 
-                                       "board in the\n displayed position, then "
-                                       "press any key.")
+            tui.print_warning_and_wait(
+                "The move was illegal! Please place the "
+                "board in the\n displayed position, then "
+                "press any key."
+            )
 
         game = chess.pgn.Game.from_board(board)
         tui.gameprintwin.clear()
@@ -141,15 +149,15 @@ def main(stdscr):
             tui.gameprintwin.addstr(str(game))
             tui.gameprintwin.refresh()
 
-            tui.print_warning("Press 'q' to exit,\n"
-                              "or 'w' to write PGN")
+            tui.print_warning("Press 'q' to exit,\n" "or 'w' to write PGN")
 
             keypress = tui.messagewin.getkey()
-            if keypress == 'q':
+            if keypress == "q":
                 sys.exit(0)
-            elif keypress == 'w':
+            elif keypress == "w":
                 write_pgn(game)
                 sys.exit(0)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     wrapper(main)
