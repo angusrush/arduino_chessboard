@@ -31,7 +31,7 @@ class BoardEvent:
         try:
             # square is a number between 0 and 63
             # is_lift is a boolean: True means lifted, False means put down.
-            raw_event: list[str] = event_string.split()
+            raw_event = event_string.split()
             if raw_event[0] == BTN:
                 self.square: int = BTN_SQ
                 self.is_lift: bool = False
