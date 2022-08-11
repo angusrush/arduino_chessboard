@@ -15,9 +15,9 @@ class IllegalMove(Exception):
 # self.is_lift = False
 class BoardEvent:
     def __init__(self, event_string, tui):
-        # square is a number between 0 and 63
-        # is_lift is a boolean: True means lifted, False means put down.
         try:
+            # square is a number between 0 and 63
+            # is_lift is a boolean: True means lifted, False means put down.
             raw_event = event_string.split()
             if raw_event[0] == 'B':
                 self.square = -1
