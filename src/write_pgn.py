@@ -1,13 +1,13 @@
 from datetime import datetime
 
 
-def filename(pgn):
+def filename(pgn) -> str:
     now = datetime.now()
     datestring = now.strftime("%y.%m.%d_%H:%M")
 
-    white_name = pgn.headers["White"]
-    black_name = pgn.headers["Black"]
-    game_result = pgn.headers["Result"]
+    white_name: str = pgn.headers["White"]
+    black_name: str = pgn.headers["Black"]
+    game_result: str = pgn.headers["Result"]
 
     if game_result == "1/2-1/2":
         game_result = "Draw"
@@ -17,7 +17,7 @@ def filename(pgn):
     return "_".join(string_blocks) + ".pgn"
 
 
-def write_pgn(pgn):
+def write_pgn(pgn) -> None:
     name = filename(pgn)
     folder = "./past_games/"
     f = open(folder + name, "a")

@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
 import serial
-import time 
+import time
 import sys
 
-port = '/dev/pts/3'
+port = "/dev/pts/3"
 
 ser = serial.Serial(port, 9600)
 
@@ -13,7 +13,7 @@ try:
     events = file.readlines()
 
     for event in events:
-        ser.write(bytes(event, encoding='utf8'))
+        ser.write(bytes(event, encoding="utf8"))
         print(port + ": " + str(event), end="")
         time.sleep(0.5)
 except:
@@ -21,4 +21,4 @@ except:
 
 while True:
     message = input(port + ": ")
-    ser.write(bytes(message + "\n", encoding='utf8'))
+    ser.write(bytes(message + "\n", encoding="utf8"))

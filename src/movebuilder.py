@@ -1,6 +1,15 @@
 import chess
 import queue
 import logging
+import typing
+import serial
+import curses_tui
+from copy import deepcopy
+
+UP = "up"
+DOWN = "down"
+BTN = "B"
+BTN_SQ = -1  # Button square
 
 
 class ParsingError(Exception):
@@ -18,16 +27,16 @@ class IllegalMove(Exception):
 # self.square = -1
 # self.is_lift = False
 class BoardEvent:
-    def __init__(self, event_string, tui):
+    def __init__(self, event_string: str) -> None:
         try:
             # square is a number between 0 and 63
             # is_lift is a boolean: True means lifted, False means put down.
-            raw_event = event_string.split()
-            if raw_event[0] == "B":
-                self.square = -1
-                self.is_lift = False
+            raw_event: list[str] = event_string.split()
+            if raw_event[0] == BTN:
+                self.square: int = BTN_SQ
+                self.is_lift: bool = False
             else:
-                self.square = int(raw_event[0])
+                self.square: int = int(raw_event[0])
 
                 # This part is just because the chessboard is only 2x2. Should be
                 # removed later.
@@ -36,38 +45,38 @@ class BoardEvent:
                 # elif self.square == 3:
                 #    self.square = 9
 
-                if raw_event[1] == "up":
-                    self.is_lift = True
-                elif raw_event[1] == "down":
-                    self.is_lift = False
+                if raw_event[1] == UP:
+                    self.is_lift: bool = True
+                elif raw_event[1] == DOWN:
+                    self.is_lift: bool = False
                 else:
                     raise ParsingError
         except:
             raise ParsingError
 
     # The string associated to such an event should have the form of the original one
-    def __str__(self):
+    def __str__(self) -> str:
         if self.is_lift:
-            movement = "up"
+            movement = UP
         else:
-            movement = "down"
+            movement = DOWN
 
-        if self.square == -1:
-            square = "B"
+        if self.square == BTN_SQ:
+            square_str = BTN
         else:
-            square = self.square
+            square_str = str(self.square)
 
-        return str(square) + " " + movement
+        return square_str + " " + movement
 
 
-# Takes two boards as inputs, returns a list of tuples of the form
-# (Square square, Piece old_piece, Piece new_piece)
-# One tuple per changed
-def compute_deltas(old_board, new_board):
-    deltas = []
+Delta: typing.TypeAlias = tuple[chess.Square, chess.Piece | None, chess.Piece | None]
+
+# Computes the differences between two boards
+def compute_deltas(old_board: chess.Board, new_board: chess.Board) -> list[Delta]:
+    deltas: list[Delta] = []
     for square in chess.SQUARES:
-        oldpiece = old_board.piece_at(square)
-        newpiece = new_board.piece_at(square)
+        oldpiece: chess.Piece | None = old_board.piece_at(square)
+        newpiece: chess.Piece | None = new_board.piece_at(square)
         if oldpiece != newpiece:
             deltas.append((square, oldpiece, newpiece))
 
@@ -77,26 +86,29 @@ def compute_deltas(old_board, new_board):
 # The MoveBuilder class contains everything needed to turn streams of events
 # into a chess Move.
 class MoveBuilder:
-    def __init__(self, board, serial_connection, tui):
+    def __init__(
+        self,
+        board: chess.Board,
+        serial_connection: serial.Serial,
+        tui: curses_tui.CursesBoardTui,
+    ) -> None:
         self.board = board
         # We want to store a copy of the board position, not the actual board
         # position! i.e. we want to pass by value, not reference
-        self.start_position = chess.Board()
-        self.start_position.set_fen(board.fen())
-        # Same as above
-        self.current_position = chess.Board()
-        self.current_position.set_fen(board.fen())
+        self.start_position = deepcopy(board)
+        self.current_position = deepcopy(board)
+
         self.pieces_in_air = queue.Queue()
-        self.ser = serial_connection
-        self.tui = tui
+        self.ser: serial.Serial = serial_connection
+        self.tui: curses_tui.CursesBoardTui = tui
 
     # Listen and ignore raw events until button is pressed. Useful because
     # events sent by the arduino befure the game begins should be ignored
-    def set_up_pieces(self):
-        while BoardEvent(self.ser.readline().decode("utf-8"), self.tui).square != -1:
+    def set_up_pieces(self) -> None:
+        while BoardEvent(self.ser.readline().decode("utf-8")).square != BTN_SQ:
             continue
 
-    def set_up_pieces_and_check(self):
+    def set_up_pieces_and_check(self) -> None:
         self.set_up_pieces()
 
         # then request the bitmap of covered squares from the arduino
@@ -104,27 +116,27 @@ class MoveBuilder:
         # and for now, just print it
         print(self.ser.readline().decode("utf-8"))
 
-    def listen_for_move(self):  # Returns a legal Move
+    def listen_for_move(self) -> chess.Move:  # Returns a legal Move
         scratchboard = chess.Board()
-        self.start_position.set_fen(self.board.fen())
-        self.current_position.set_fen(self.board.fen())
+        self.start_position = deepcopy(self.board)
+        self.current_position = deepcopy(self.board)
         self.pieces_in_air.queue.clear()
         while True:
             # Whenever an event comes over the serial connection, return it,
             # and log it
-            raw_event = self.ser.readline().decode("utf-8")
+            raw_event: str = self.ser.readline().decode("utf-8")
             try:
-                event = BoardEvent(raw_event, self.tui)
+                event = BoardEvent(raw_event)
             except:
                 raise ParsingError
 
             logging.info("Event recognized: " + str(event))
 
             # If the event comes from the button being pressed...
-            if event.square == -1:
+            if event.square == BTN_SQ:
                 # Set the scratchboard to the same position as the
                 # starting position of the current move
-                scratchboard.set_fen(self.start_position.fen())
+                scratchboard = deepcopy(self.start_position)
                 # For each legal move from the starting position...
                 for move in self.start_position.legal_moves:
                     # Push it to the scratchboard...
@@ -171,13 +183,14 @@ class MoveBuilder:
                     self.pieces_in_air.put(piece)
                     self.tui.print_pieces(self.pieces_in_air)
                 else:
+                    # It's not a lift, so it's a place
                     try:
-                        piece = self.pieces_in_air.get(False)
+                        piece: chess.Piece | None = self.pieces_in_air.get(False)
                         self.current_position.set_piece_at(event.square, piece)
-                        self.tui.print_pieces(self.pieces_in_air)
                     except:
-                        self.tui.print_pieces(self.pieces_in_air)
                         raise ParsingError
+
+                    self.tui.print_pieces(self.pieces_in_air)
 
             # The board display should display the actual position on the physical chessoard
             self.tui.print_board(self.current_position)

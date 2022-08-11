@@ -18,6 +18,9 @@ from movebuilder import *
 from curses_tui import *
 from write_pgn import write_pgn
 
+WHITE = "White"
+BLACK = "Black"
+
 
 def main(stdscr):
     stdscr.clear()
@@ -26,7 +29,7 @@ def main(stdscr):
     # governed by the computer. If we don't, we start listening at the usual
     # port connected to by our arduino.
     parser = argparse.ArgumentParser(
-        description="parse arguments" + "for smart chess board"
+        description="parse arguments for smart chess board"
     )
     parser.add_argument(
         "-t",
@@ -42,7 +45,7 @@ def main(stdscr):
 
     # The game sets this when the game ends, so the rest of the program
     # knows what happened. Hacky, but it works fine.
-    gameover_message = ""
+    gameover_message: str = ""
 
     tui = CursesBoardTui()
 
@@ -67,19 +70,20 @@ def main(stdscr):
 
     while True:
         if board.turn:
-            to_move = "White"
-            not_to_move = "Black"
+            to_move = WHITE
+            not_to_move = BLACK
         else:
-            to_move = "Black"
-            not_to_move = "White"
+            to_move = BLACK
+            not_to_move = WHITE
 
-        if board.fullmove_number == 1 and to_move == "White":
+        if board.fullmove_number == 1 and to_move == WHITE:
             tui.print_message(f"{to_move} to move.")
         else:
             tui.print_message(f"{not_to_move}'s move complete. {to_move} to move.")
 
-        # Starts listening for a move. This will print out a bunch of intermediate board positions.
-        move = None
+        # Starts listening for a move. This will print out a
+        # bunch of intermediate board positions.
+        move: chess.Move | None = None
         try:
             move = mb.listen_for_move()
         except KeyboardInterrupt:
