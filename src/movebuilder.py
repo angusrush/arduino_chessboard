@@ -1,5 +1,3 @@
-# pyright: strict
-
 import chess
 import queue
 import logging

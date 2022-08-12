@@ -1,4 +1,3 @@
-# pyright: strict
 #!/usr/bin/python
 
 import serial

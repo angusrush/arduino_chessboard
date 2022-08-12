@@ -1,5 +1,3 @@
-# pyright: strict
-
 import chess.pgn
 from datetime import datetime
 
@@ -23,6 +21,5 @@ def filename(pgn: chess.pgn.Game) -> str:
 def write_pgn(pgn: chess.pgn.Game) -> None:
     name = filename(pgn)
     folder = "./past_games/"
-    f = open(folder + name, "a")
-    f.write(str(pgn))
-    f.close()
+    with open(folder + name, "a") as f:
+        f.write(str(pgn))
