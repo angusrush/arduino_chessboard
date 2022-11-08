@@ -43,7 +43,7 @@ def main(stdscr):
     # This records events and legal moves to events.log. Very handy!
     logging.basicConfig(level=logging.DEBUG, filename="events.log")
 
-    # The game sets this when the game ends, so the rest of the program
+    # This is set when the game ends, so the rest of the program
     # knows what happened. Hacky, but it works fine.
     gameover_message: str = ""
 
@@ -161,7 +161,6 @@ def main(stdscr):
             elif keypress == "w":
                 write_pgn(game)
                 sys.exit(0)
-
 
 if __name__ == "__main__":
     wrapper(main)
