@@ -7,6 +7,10 @@ from curses.textpad import Textbox
 
 class CursesBoardTui:
     def __init__(self) -> None:
+        self.stdscr = curses.initscr()
+        curses.noecho()
+        curses.cbreak()
+        self.stdscr.keypad(True)
         # print(board) is a 2d array of length 16x8
         self.boardwin = curses.newwin(8, 16, 0, 0)
         # messagewin should be a full-length
@@ -14,6 +18,15 @@ class CursesBoardTui:
         self.warningwin = curses.newwin(2, 60, 3, 20)
         self.gameprintwin = curses.newwin(15, 80, 11, 0)
         self.pieceswin = curses.newwin(2, 30, 0, 20)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, ex_type, ex_value, ex_traceback):
+        curses.nocbreak()
+        self.stdscr.keypad(False)
+        curses.echo()
+        curses.endwin()
 
     def print_board(self, board: chess.Board) -> None:
         self.boardwin.clear()
