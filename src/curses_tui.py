@@ -61,3 +61,7 @@ class CursesBoardTui:
         black_player = namebox_black.gather().strip()
 
         return [white_player, black_player]
+
+    def prompt_quit(self) -> str:
+        keypress = self.messagewin.getkey()
+        return keypress

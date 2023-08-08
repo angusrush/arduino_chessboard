@@ -4,7 +4,7 @@ import serial
 import time
 import sys
 
-port = "/dev/pts/1"
+port = "/dev/pts/5"
 
 ser = serial.Serial(port, 9600)
 

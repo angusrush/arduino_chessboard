@@ -90,7 +90,7 @@ class MoveBuilder:
         self,
         board: chess.Board,
         serial_connection: serial.Serial,
-        tui: curses_tui.CursesBoardTui,
+        tui
     ) -> None:
         self.board = board
         # We want to store a copy of the board position, not the actual board

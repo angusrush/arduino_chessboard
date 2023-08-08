@@ -7,22 +7,26 @@ import logging
 import argparse
 import sys
 from datetime import date
-import curses
 from curses import wrapper
-from curses.textpad import Textbox
 
 # My code is mostly in ./src/*
 sys.path.insert(0, "src")
 
 from movebuilder import *
 from curses_tui import *
+from simple_tui import *
 from write_pgn import write_pgn
 
 WHITE = "White"
 BLACK = "Black"
 
+def main():
+    # Parse arguments
 
-def main(stdscr):
+    wrapper(chess_game)
+    pass
+
+def chess_game(stdscr):
     stdscr.clear()
 
     # If we start with the --testing, or -t, flag, we use virtual ports
@@ -37,6 +41,12 @@ def main(stdscr):
         action="store_true",
         help="Testing mode, handles input differently",
     )
+    parser.add_argument(
+        "-n",
+        "--nocurses",
+        action="store_true",
+        help="Use simple interface printing to command line instead of ncurses",
+    )
 
     args = parser.parse_args()
 
@@ -47,11 +57,14 @@ def main(stdscr):
     # knows what happened. Hacky, but it works fine.
     gameover_message: str = ""
 
-    tui = CursesBoardTui()
+    if args.nocurses:
+        tui = SimpleTui()
+    else:
+        tui = CursesBoardTui()
 
     # What exactly we initialize will depend on whether we're using the arduino.
     if args.testing:
-        ser = serial.Serial("/dev/pts/2", 9600)
+        ser = serial.Serial("/dev/pts/4", 9600)
         board = chess.Board()
         mb = MoveBuilder(board, ser, tui)
         tui.print_board(board)
@@ -109,9 +122,8 @@ def main(stdscr):
             )
 
         game = chess.pgn.Game.from_board(board)
-        tui.gameprintwin.clear()
-        tui.gameprintwin.addstr(str(game))
-        tui.gameprintwin.refresh()
+        tui.print_board(board)
+        tui.print_pgn(game)
 
         # Check for various things which would mean that the game was over
         if board.is_checkmate():
@@ -131,31 +143,16 @@ def main(stdscr):
 
             game = chess.pgn.Game.from_board(board)
             game.headers["Date"] = str(date.today())
-            tui.gameprintwin.clear()
-            tui.gameprintwin.addstr(str(game))
-            tui.gameprintwin.refresh()
+            tui.print_board(board)
 
-            namewin_white = curses.newwin(1, 30, 15, 8)
-            namebox_white = Textbox(namewin_white)
-            namebox_white.edit()
-            message = namebox_white.gather()
-            game.headers["White"] = message.strip()
-            tui.gameprintwin.clear()
-            tui.gameprintwin.addstr(str(game))
-            tui.gameprintwin.refresh()
-
-            namewin_black = curses.newwin(1, 30, 16, 8)
-            namebox_black = Textbox(namewin_black)
-            namebox_black.edit()
-            message = namebox_black.gather()
-            game.headers["Black"] = message.strip()
-            tui.gameprintwin.clear()
-            tui.gameprintwin.addstr(str(game))
-            tui.gameprintwin.refresh()
+            player_names = tui.prompt_name()
+            game.headers["White"] = player_names[0]
+            game.headers["Black"] = player_names[1]
+            tui.print_pgn(game)
 
             tui.print_warning("Press 'q' to exit,\n" "or 'w' to write PGN")
 
-            keypress = tui.messagewin.getkey()
+            keypress = tui.prompt_quit()
             if keypress == "q":
                 sys.exit(0)
             elif keypress == "w":
@@ -163,4 +160,4 @@ def main(stdscr):
                 sys.exit(0)
 
 if __name__ == "__main__":
-    wrapper(main)
+    main()
