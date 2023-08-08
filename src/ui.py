@@ -4,6 +4,7 @@ import chess.pgn
 import queue
 from curses.textpad import Textbox
 
+
 class UserInterface:
     def __init__(self) -> None:
         pass
@@ -37,6 +38,7 @@ class UserInterface:
 
     def prompt_quit(self) -> str:
         return ""
+
 
 class SimpleTui(UserInterface):
     def print_board(self, board: chess.Board) -> None:
@@ -72,7 +74,7 @@ class SimpleTui(UserInterface):
         return [white_player, black_player]
 
     def prompt_quit(self) -> str:
-        keypress = input("Print 'q' to quit or 'w' to write pgn");
+        keypress = input("Print 'q' to quit or 'w' to write pgn")
         return keypress
 
 

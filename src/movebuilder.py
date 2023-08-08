@@ -70,6 +70,7 @@ class BoardEvent:
 
 Delta: typing.TypeAlias = tuple[chess.Square, chess.Piece | None, chess.Piece | None]
 
+
 # Computes the differences between two boards
 def compute_deltas(old_board: chess.Board, new_board: chess.Board) -> list[Delta]:
     deltas: list[Delta] = []
@@ -86,10 +87,7 @@ def compute_deltas(old_board: chess.Board, new_board: chess.Board) -> list[Delta
 # into a chess Move.
 class MoveBuilder:
     def __init__(
-        self,
-        board: chess.Board,
-        serial_connection: serial.Serial,
-        ui
+        self, board: chess.Board, serial_connection: serial.Serial, ui
     ) -> None:
         self.board = board
         # We want to store a copy of the board position, not the actual board
@@ -143,7 +141,6 @@ class MoveBuilder:
                     # and compare with the current position of the board.
                     # If there's a match:
                     if scratchboard.piece_map() == self.current_position.piece_map():
-
                         # log it
                         logging.info(f"Legal move made: {move}")
 

@@ -115,7 +115,7 @@ def main():
             ui.print_board(board)
             ui.print_pgn(game)
 
-            # Check for various things which would mean that the game was over
+            # Check for various things which would mean that the game is over
             if board.is_checkmate():
                 gameover_message = f"Checkmate! {to_move} wins!"
             elif board.is_stalemate():
