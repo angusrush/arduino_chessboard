@@ -3,7 +3,6 @@ import queue
 import logging
 import typing
 import serial
-import curses_tui
 from copy import deepcopy
 
 UP = "up"
@@ -90,7 +89,7 @@ class MoveBuilder:
         self,
         board: chess.Board,
         serial_connection: serial.Serial,
-        tui
+        ui
     ) -> None:
         self.board = board
         # We want to store a copy of the board position, not the actual board
@@ -100,7 +99,7 @@ class MoveBuilder:
 
         self.pieces_in_air: queue.Queue[chess.Piece] = queue.Queue()
         self.ser: serial.Serial = serial_connection
-        self.tui: curses_tui.CursesBoardTui = tui
+        self.ui = ui
 
     # Listen and ignore raw events until button is pressed. Useful because
     # events sent by the arduino befure the game begins should be ignored
@@ -160,8 +159,8 @@ class MoveBuilder:
                         deltas = compute_deltas(self.current_position, scratchboard)
                         if len(deltas) == 1:
                             # then let the players know
-                            self.tui.print_warning("Promotion detected")
-                            self.tui.print_board(scratchboard)
+                            self.ui.print_warning("Promotion detected")
+                            self.ui.print_board(scratchboard)
                             # and return the promoted move.
                             return move
 
@@ -181,7 +180,7 @@ class MoveBuilder:
                         )
                         raise ParsingError
                     self.pieces_in_air.put(piece)
-                    self.tui.print_pieces(self.pieces_in_air)
+                    self.ui.print_pieces(self.pieces_in_air)
                 else:
                     # It's not a lift, so it's a place
                     try:
@@ -190,7 +189,7 @@ class MoveBuilder:
                     except:
                         raise ParsingError
 
-                    self.tui.print_pieces(self.pieces_in_air)
+                    self.ui.print_pieces(self.pieces_in_air)
 
             # The board display should display the actual position on the physical chessoard
-            self.tui.print_board(self.current_position)
+            self.ui.print_board(self.current_position)

@@ -12,8 +12,7 @@ from datetime import date
 sys.path.insert(0, "src")
 
 from movebuilder import *
-from curses_tui import *
-from simple_tui import *
+from ui import SimpleTui, CursesBoardTui
 from write_pgn import write_pgn
 
 WHITE = "White"
@@ -48,28 +47,28 @@ def main():
     gameover_message: str = ""
 
     if args.nocurses:
-        Tui = SimpleTui
+        UserInterface = SimpleTui
     else:
-        Tui = CursesBoardTui
+        UserInterface = CursesBoardTui
 
-    with Tui() as tui:
+    with UserInterface() as ui:
         # What exactly we initialize will depend on whether we're using the arduino.
         if args.testing:
             ser = serial.Serial("/dev/pts/4", 9600)
             board = chess.Board()
-            mb = MoveBuilder(board, ser, tui)
-            tui.print_board(board)
+            mb = MoveBuilder(board, ser, ui)
+            ui.print_board(board)
 
         else:
             ser = serial.Serial("/dev/ttyACM0", 9600)
             starting_fen = "5rk1/5ppp/8/8/8/8/1q3PPP/Q4RK1 w - - 0 1"
             board = chess.Board(fen=starting_fen)
-            mb = MoveBuilder(board, ser, tui)
-            tui.print_message("Board set with starting configuration")
-            tui.print_board(board)
+            mb = MoveBuilder(board, ser, ui)
+            ui.print_message("Board set with starting configuration")
+            ui.print_board(board)
             mb.set_up_pieces()
 
-        tui.print_message("Starting new game.")
+        ui.print_message("Starting new game.")
         logging.info("Starting new game.")
 
         while True:
@@ -81,9 +80,9 @@ def main():
                 not_to_move = WHITE
 
             if board.fullmove_number == 1 and to_move == WHITE:
-                tui.print_message(f"{to_move} to move.")
+                ui.print_message(f"{to_move} to move.")
             else:
-                tui.print_message(f"{not_to_move}'s move complete. {to_move} to move.")
+                ui.print_message(f"{not_to_move}'s move complete. {to_move} to move.")
 
             # Starts listening for a move. This will print out a
             # bunch of intermediate board positions.
@@ -93,10 +92,10 @@ def main():
             except KeyboardInterrupt:
                 sys.exit(0)
             except ParsingError:
-                tui.print_board(board)
+                ui.print_board(board)
                 mb.pieces_in_air.queue.clear()
-                tui.print_pieces(mb.pieces_in_air)
-                tui.print_warning_and_wait(
+                ui.print_pieces(mb.pieces_in_air)
+                ui.print_warning_and_wait(
                     "Parsing error! Please place the "
                     "board in the\n displayed position, then "
                     "press any key."
@@ -105,16 +104,16 @@ def main():
             if move:
                 board.push(move)
             elif move == chess.Move.null():
-                tui.print_board(board)
-                tui.print_warning_and_wait(
+                ui.print_board(board)
+                ui.print_warning_and_wait(
                     "The move was illegal! Please place the "
                     "board in the\n displayed position, then "
                     "press any key."
                 )
 
             game = chess.pgn.Game.from_board(board)
-            tui.print_board(board)
-            tui.print_pgn(game)
+            ui.print_board(board)
+            ui.print_pgn(game)
 
             # Check for various things which would mean that the game was over
             if board.is_checkmate():
@@ -130,20 +129,20 @@ def main():
 
             # And if the game is over...
             if gameover_message:
-                tui.print_message(gameover_message)
+                ui.print_message(gameover_message)
 
                 game = chess.pgn.Game.from_board(board)
                 game.headers["Date"] = str(date.today())
-                tui.print_board(board)
+                ui.print_board(board)
 
-                player_names = tui.prompt_name()
+                player_names = ui.prompt_name()
                 game.headers["White"] = player_names[0]
                 game.headers["Black"] = player_names[1]
-                tui.print_pgn(game)
+                ui.print_pgn(game)
 
-                tui.print_warning("Press 'q' to exit,\n" "or 'w' to write PGN")
+                ui.print_warning("Press 'q' to exit,\n" "or 'w' to write PGN")
 
-                keypress = tui.prompt_quit()
+                keypress = ui.prompt_quit()
                 if keypress == "q":
                     sys.exit(0)
                 elif keypress == "w":
