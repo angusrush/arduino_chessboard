@@ -2,7 +2,7 @@
 
 import serial
 
-port = "/dev/pts/3"
+port = "/dev/pts/1"
 
 ser = serial.Serial(port, 9600)
 

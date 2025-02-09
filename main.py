@@ -54,7 +54,7 @@ def main():
     with UserInterface() as ui:
         # What exactly we initialize will depend on whether we're using the arduino.
         if args.testing:
-            ser = serial.Serial("/dev/pts/4", 9600)
+            ser = serial.Serial("/dev/pts/2", 9600)
             board = chess.Board()
             mb = MoveBuilder(board, ser, ui)
             ui.print_board(board)
